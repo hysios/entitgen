@@ -1,0 +1,221 @@
+syntax = "proto3";
+
+package user;
+
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// imports
+option go_package = "wxgpt.io/pkg/server/gen/proto;pb";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {version: "1.0"}
+  external_docs: {
+    url: "wxgpt.io/pkg/server/gen/proto",
+    description: "mx framework api demo"
+  }
+  schemes: [
+    HTTP,
+    HTTPS
+  ];
+};
+
+// Generated according to https://cloud.google.com/apis/design/standard_methods
+service UserService {
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/api/v1/users"};
+  }
+
+  rpc GetUser(GetUserRequest) returns (User) {
+    option (google.api.http) = {get: "/api/v1/{name=users/*}"};
+  }
+
+  rpc CreateUser(CreateUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/api/v1/users"
+      body: "user"
+    };
+  }
+
+  rpc UpdateUser(UpdateUserRequest) returns (User) {
+    option (google.api.http) = {
+      patch: "/api/v1/{user.name=users/*}"
+      body: "user"
+    };
+  }
+
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=users/*}"};
+  }
+
+  // Login
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/login"
+      body: "*"
+    };
+  }
+
+  // Logout
+  rpc Logout(LogoutRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {post: "/api/v1/logout"};
+  }
+
+  // Refresh token
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/refresh_token"
+      body: "*"
+    };
+  }
+
+  // Change password
+  rpc ChangePassword(ChangePasswordRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/api/v1/change_password"
+      body: "*"
+    };
+  }
+}
+
+// message User {
+// ! This should be defined elsewere
+// }
+
+message ListUsersRequest {
+  // The parent resource name, for example, "shelves/shelf1"
+  string parent = 1;
+
+  // The maximum number of items to return.
+  int32 page_size = 2;
+
+  // The next_page_token value returned from a previous List request, if any.
+  string page_token = 3;
+}
+
+message ListUsersResponse {
+  // The field name should match the noun "user" in the method name.
+  // There will be a maximum number of items returned based on the page_size field in the request.
+  repeated User users = 1;
+
+  // Token to retrieve the next page of results, or empty if there are no more results in the list.
+  string next_page_token = 2;
+}
+
+message GetUserRequest {
+  // The field will contain name of the resource requested.
+  string name = 1;
+}
+
+message CreateUserRequest {
+  // The parent resource name where the user is to be created.
+  string parent = 1;
+
+  // The user id to use for this user.
+  string user_id = 2;
+
+  // The user resource to create.
+  // The field name should match the Noun in the method name.
+  User user = 3;
+}
+
+message UpdateUserRequest {
+  // The user resource which replaces the resource on the server.
+  User user = 1;
+
+  // The update mask applies to the resource. For the `FieldMask` definition,
+  // see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteUserRequest {
+  // The resource name of the user to be deleted.
+  string name = 1;
+}
+
+enum Permission {
+  PERMISSION_UNSPECIFIED = 0;
+  PERMISSION_READ = 1;
+  PERMISSION_WRITE = 2;
+  PERMISSION_DELETE = 3;
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_ADMIN = 1;
+  ROLE_OWNER = 2;
+  ROLE_ORG_MANAGER = 3;
+  ROLE_MEMBER = 4;
+}
+
+message User {
+  message PermissionList {
+    repeated Permission permissions = 1;
+  }
+
+  uint32 id = 1;
+  string name = 2;
+  string username = 3;
+  string namespace = 4;
+  string nickname = 5;
+  string email = 6;
+  optional string password = 7;
+  string avatar = 8;
+  string phone = 9;
+  string address = 10;
+  string description = 11;
+  float score = 12;
+  Role role = 13;
+  bool is_active = 14;
+  repeated string in_scopes = 15;
+  map<string, PermissionList> permissions = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+  uint32 member_id = 19;
+  Member member = 20;
+}
+
+message Member {
+  uint32 id = 1;
+  uint32 user_id = 2;
+  uint32 enterprise_id = 3;
+  User user = 4;
+  google.protobuf.Timestamp createdAt = 6;
+  google.protobuf.Timestamp updatedAt = 7;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  User user = 2;
+  string refresh_token = 3;
+  google.protobuf.Timestamp expires_in = 4;
+  google.protobuf.Timestamp refresh_expires_in = 5;
+}
+
+message LogoutRequest {
+  string token = 1;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp expires_in = 3;
+  google.protobuf.Timestamp refresh_expires_in = 4;
+}
+
+message ChangePasswordRequest {
+  string old_password = 1;
+  string new_password = 2;
+}
