@@ -12,9 +12,10 @@ type Options struct {
 		Model string
 		Field string
 	}
+	GenSlice         bool
 	EntityFileDetect bool
-
-	sets map[string]SetOptionFunc
+	NoEmbed          []string
+	sets             map[string]SetOptionFunc
 }
 
 // parseOptions
@@ -25,6 +26,8 @@ func parseOptions(options []string) (*Options, error) {
 	if err := outOpts.Apply(options); err != nil {
 		return nil, err
 	}
+
+	outOpts.GenSlice = genSlice
 	return &outOpts, nil
 }
 
@@ -67,18 +70,21 @@ func init() {
 	})
 
 	GlobalOption.AddMethod("suppress", func(opts *Options, value interface{}) error {
-		es := strings.Split(value.(string), ".")
-		if len(es) != 2 {
-			opts.Suppress = append(opts.Suppress, struct {
-				Model string
-				Field string
-			}{Field: es[0]})
-		} else {
+		lines := strings.Split(value.(string), ",")
+		for _, v := range lines {
+			es := strings.Split(v, ".")
+			if len(es) != 2 {
+				opts.Suppress = append(opts.Suppress, struct {
+					Model string
+					Field string
+				}{Field: es[0]})
+			} else {
 
-			opts.Suppress = append(opts.Suppress, struct {
-				Model string
-				Field string
-			}{Model: es[0], Field: es[1]})
+				opts.Suppress = append(opts.Suppress, struct {
+					Model string
+					Field string
+				}{Model: es[0], Field: es[1]})
+			}
 		}
 		return nil
 	})
@@ -89,6 +95,11 @@ func init() {
 			return err
 		}
 		opts.EntityFileDetect = v
+		return nil
+	})
+
+	GlobalOption.AddMethod("no-embed", func(opts *Options, value interface{}) error {
+		opts.NoEmbed = append(opts.NoEmbed, value.(string))
 		return nil
 	})
 

@@ -176,6 +176,7 @@ message User {
   google.protobuf.Timestamp updated_at = 18;
   uint32 member_id = 19;
   Member member = 20;
+  repeated Friend friends = 21;
 }
 
 message Member {
@@ -185,6 +186,14 @@ message Member {
   User user = 4;
   google.protobuf.Timestamp createdAt = 6;
   google.protobuf.Timestamp updatedAt = 7;
+}
+
+message Friend {
+  uint32 id = 1;
+  uint32 user_id = 2;
+  string username = 3;
+  string nickname = 4;
+  string avatar = 5;
 }
 
 message LoginRequest {

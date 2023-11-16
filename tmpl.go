@@ -19,24 +19,46 @@ type {{.Name}} struct { {{range $x := .Fields}}
 {{ .FromProtoMethod }}
 
 {{ .ModelFromProtoMethod }}
+
+{{ .ModelToProtoMethod }}
+
+{{ if .GenSlice }}
+
+{{ .ModelListFromMethod }}
+
+{{ .ModelListToMethod }}
+
+{{ end }}
 `
 
 const (
 	toProtoTemplate = `func ({{.Receive}}) ToProto() {{ .Return }} {
 	return {{ .OutputType }}{ 
-		{{ range .Fields }}{{.PbName}}: {{ printf "%s.%s" $.ShortName .Name | .ConvertPbType }},
+		{{ range .Fields }}{{.PbName}}: {{ $.FieldToProto . }},
 		{{ end }}
 	}
 }`
 
 	fromProtoTemplate = `func ({{.Receive}}) FromProto({{ .InputArgs }}) {{ .Return}} {
 	return {{ .OutputType }}{
-		{{ range .Fields }}{{.Name}}: {{ printf "%s.%s" $.InputName .PbName | .ConvertType }},
+		{{ range .Fields }}{{.Name}}: {{ $.FieldToModel . }},
 		{{ end }}
 	}
 }`
 
 	modelFromProtoTemplate = `func {{ .Name }}FromProto({{ .InputArgs }}) {{ .Return}} {
 	return (*{{.Name}})(nil).FromProto({{ .InputVals }})
+}`
+
+	modelToProtoTemplate = `func {{ .Name }}ToProto({{ .InputArgs }}) {{ .Return }} {
+	return {{ .VarName }}.ToProto()
+}`
+
+	modelListFromTemplate = `func {{ .Name }}ListFrom({{ .InputArgs }}) {{ .Return }} {
+	return slice.Map({{.VarName}}, {{ .Name }}FromProto)
+}`
+
+	modelListToTemplate = `func {{ .Name }}ListToProto({{ .InputArgs }}) {{ .Return }} {
+	return slice.Map({{.VarName}}, {{ .Name }}ToProto)
 }`
 )

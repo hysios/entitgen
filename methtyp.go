@@ -12,6 +12,7 @@ type GenMethodContext struct {
 	gen.Named
 
 	Name    string
+	VarName string
 	Rece    *gen.Var
 	Outputs []*gen.Var
 	Inputs  []*gen.Var
@@ -97,4 +98,12 @@ func (m *GenMethodContext) InputName() string {
 // UpdateChain
 func (m *GenMethodContext) UpdateChain() string {
 	return "updates ...UpdateChain"
+}
+
+func (ctx *GenMethodContext) FieldToProto(field *gen.Field) string {
+	return field.ConvertPbType(ctx.ShortName() + "." + field.Name)
+}
+
+func (ctx *GenMethodContext) FieldToModel(field *gen.Field) string {
+	return field.ConvertType(ctx.InputName() + "." + field.PbName)
 }

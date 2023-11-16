@@ -3,6 +3,8 @@ package main
 import (
 	"go/types"
 	"strings"
+
+	pluralize "github.com/gertd/go-pluralize"
 )
 
 var conventionTypes = map[string]string{
@@ -46,6 +48,10 @@ func convertName(name string) string {
 	return name
 }
 
+var (
+	plur = pluralize.NewClient()
+)
+
 func init() {
 	registerConv(match{
 		Match: func(name string) bool {
@@ -55,6 +61,7 @@ func init() {
 			return name[:len(name)-2] + "ID"
 		},
 	})
+
 }
 
 // isScalaType returns true if typ is a scalar type.
@@ -136,11 +143,30 @@ func isAliasType(typ types.Type) bool {
 
 // gormSliceType
 func gormSliceType(typ types.Type) string {
-	return "datatypes.JSONSlice[" + typ.String() + "]"
+	return "datatypes.JSONSlice[" + getTypeName(typ) + "]"
+}
+
+// getSliceType
+func getSliceType(typ types.Type) string {
+
+	return "[]" + getTypeName(typ)
 }
 
 // gormMapType
 func gormMapType(key, value types.Type) string {
 	mapType := "map[" + key.String() + "]" + getTypeName(value)
 	return "datatypes.JSONType[" + mapType + "]"
+}
+
+func shortType(typ types.Type) string {
+	t := typ.String()
+	if strings.Contains(t, "/") {
+		t = t[strings.LastIndex(t, "/")+1:]
+	}
+	return t
+}
+
+// pluralize
+func plural(name string) string {
+	return plur.Plural(name)
 }

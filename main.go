@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
+	"path/filepath"
 )
 
 type arrayFlags []string
@@ -27,9 +29,12 @@ var (
 	composeTypes     arrayFlags
 	filenameTemplate string
 	options          arrayFlags
+	genSlice         bool
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
+
 	parseArgs()
 
 	opts, err := parseOptions(options)
@@ -64,8 +69,36 @@ func parseArgs() {
 	flag.StringVar(&modelType, "M", "", "generate protobuf type to entity Model")
 	flag.Var(&composeTypes, "compose-type", "compose many type to entity Model")
 	flag.StringVar(&filenameTemplate, "filename-template", "{{.Name}}.entity.go", "filename template")
+	flag.BoolVar(&genSlice, "slice", false, "generate slice type")
 	flag.Var(&options, "option", "option")
 	flag.Var(&options, "O", "option")
 
 	flag.Parse()
+
+	root := lookupProjectDir()
+	protoGenPath = resolvePath(root, protoGenPath)
+	genPath = resolvePath(root, genPath)
+}
+
+func resolvePath(root string, rel string) string {
+	if filepath.IsAbs(rel) {
+		return rel
+	}
+	return filepath.Join(root, rel)
+}
+
+func lookupProjectDir() string {
+	cwd, _ := os.Getwd()
+	for {
+		if _, err := os.Stat(filepath.Join(cwd, "go.mod")); err == nil {
+			return cwd
+		}
+
+		cwd = filepath.Dir(cwd)
+		if cwd == "/" {
+			break
+		}
+	}
+
+	return ""
 }

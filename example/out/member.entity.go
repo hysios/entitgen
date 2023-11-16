@@ -2,20 +2,10 @@
 package out
 
 import (
-	"time"
-
+	"github.com/akrennmair/slice"
 	pb "github.com/hysios/entitgen/example/gen/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-type Member struct {
-	ID           uint
-	UserID       uint
-	EnterpriseID uint
-	User         *User
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
 
 // ToProto converts the model to protobuf type.
 func (m *Member) ToProto() *pb.Member {
@@ -43,4 +33,16 @@ func (m *Member) FromProto(pMember *pb.Member) *Member {
 
 func MemberFromProto(pMember *pb.Member) *Member {
 	return (*Member)(nil).FromProto(pMember)
+}
+
+func MemberToProto(member *Member) *pb.Member {
+	return member.ToProto()
+}
+
+func MemberListFrom(members []*pb.Member) []*Member {
+	return slice.Map(members, MemberFromProto)
+}
+
+func MemberListToProto(members []*Member) []*pb.Member {
+	return slice.Map(members, MemberToProto)
 }

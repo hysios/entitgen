@@ -15,6 +15,7 @@ func TestEntitGen_buildTypeInfos(t *testing.T) {
 		ModelType:    "User",
 		Options: Options{
 			NoModels: []string{"Member"},
+			NoEmbed:  []string{"Friends"},
 			Suppress: []struct {
 				Model string
 				Field string
@@ -30,9 +31,17 @@ func TestEntitGen_buildTypeInfos(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, pkgs)
 
+	outPkgs, err := g.parsePackage(g.Output)
+	assert.NoError(t, err)
+	assert.NotNil(t, outPkgs)
+
 	typeinfos, err := g.buildTypeInfos(pkgs)
 	assert.NoError(t, err)
 	assert.NotNil(t, typeinfos)
+
+	modelinfos, err := g.buildTypeInfos(outPkgs)
+	assert.NoError(t, err)
+	assert.NotNil(t, modelinfos)
 
 	uinfo, ok := typeinfos["User"]
 	assert.True(t, ok)
@@ -51,7 +60,7 @@ func TestEntitGen_buildTypeInfos(t *testing.T) {
 	// 	_ = m
 	// }
 
-	gens, err := g.convertPbToModel(uinfo, typeinfos, nil, "User")
+	gens, err := g.convertPbToModel(uinfo, typeinfos, modelinfos, "User")
 	assert.NoError(t, err)
 	assert.NotNil(t, gens)
 

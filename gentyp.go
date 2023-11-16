@@ -17,6 +17,8 @@ type GenType struct {
 	PbPkgName string
 	Fields    []*gen.Field
 	Options   Options
+
+	models map[string]*typeInfo
 }
 
 type TypeConvert struct {
@@ -190,6 +192,127 @@ func (t *GenType) ModelFromProtoMethod() string {
 	return buf.String()
 }
 
+// ModelToProtoMethod
+func (t *GenType) ModelToProtoMethod() string {
+	var (
+		tmpl = template.Must(template.New("modelToProtoMethod").Parse(modelToProtoTemplate))
+		buf  = &bytes.Buffer{}
+		ctx  = &GenMethodContext{
+			Name: t.Name,
+			Rece: &gen.Var{
+				Name:    t.Name,
+				Pointer: true,
+				Type:    t.Name,
+			},
+			VarName: strings.ToLower(t.Name),
+			Fields:  t.Fields,
+			types:   t,
+			Outputs: []*gen.Var{
+				{
+					Name:    strings.ToLower(t.Name),
+					Pointer: true,
+					Type:    t.PbPkgName + "." + t.Name,
+				},
+			},
+			Inputs: []*gen.Var{
+				&gen.Var{
+					Name:    strings.ToLower(t.Name),
+					Pointer: true,
+					Type:    t.Name,
+				},
+			},
+		}
+	)
+
+	if err := tmpl.Execute(buf, ctx); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
+}
+
+// ModelListFromMethod
+func (t *GenType) ModelListFromMethod() string {
+	var (
+		tmpl = template.Must(template.New("modelListFromMethod").Parse(modelListFromTemplate))
+		buf  = &bytes.Buffer{}
+		ctx  = &GenMethodContext{
+			Name: t.Name,
+			Rece: &gen.Var{
+				Name:    t.Name,
+				Pointer: true,
+				Type:    t.Name,
+			},
+			VarName: strings.ToLower(plural(t.Name)),
+			Fields:  t.Fields,
+			types:   t,
+			Outputs: []*gen.Var{
+				{
+					Name:    strings.ToLower(t.Name),
+					Pointer: true,
+					Type:    t.Name,
+					Slice:   []string{""},
+				},
+			},
+			Inputs: []*gen.Var{
+				&gen.Var{
+					Name:    strings.ToLower(plural(t.Name)),
+					Pointer: true,
+					Type:    t.PbPkgName + "." + t.Name,
+					Slice:   []string{""},
+				},
+			},
+		}
+	)
+
+	if err := tmpl.Execute(buf, ctx); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
+}
+
+// ModelListToMethod
+func (t *GenType) ModelListToMethod() string {
+	var (
+		tmpl = template.Must(template.New("modelListToMethod").Parse(modelListToTemplate))
+		buf  = &bytes.Buffer{}
+		ctx  = &GenMethodContext{
+			Name: t.Name,
+			Rece: &gen.Var{
+				Name:    t.Name,
+				Pointer: true,
+				Type:    t.Name,
+			},
+			VarName: strings.ToLower(plural(t.Name)),
+			Fields:  t.Fields,
+			types:   t,
+			Outputs: []*gen.Var{
+				{
+					Name:    strings.ToLower(t.Name),
+					Pointer: true,
+					Type:    t.PbPkgName + "." + t.Name,
+					Slice:   []string{""},
+				},
+			},
+			Inputs: []*gen.Var{
+				&gen.Var{
+					Name:    strings.ToLower(plural(t.Name)),
+					Pointer: true,
+					Type:    t.Name,
+					Slice:   []string{""},
+				},
+			},
+		}
+	)
+
+	if err := tmpl.Execute(buf, ctx); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
+}
+
 // NoModel
 func (m *GenType) NoModel() bool {
 	for _, f := range m.Options.NoModels {
@@ -198,5 +321,14 @@ func (m *GenType) NoModel() bool {
 		}
 	}
 
+	if _, ok := m.models[m.Name]; ok {
+		return true
+	}
+
 	return false
+}
+
+// GenSlice
+func (m *GenType) GenSlice() bool {
+	return m.Options.GenSlice
 }

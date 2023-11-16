@@ -2,9 +2,12 @@ package main
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/hysios/entitgen/gen"
 )
+
+const SlicePkg = "github.com/akrennmair/slice"
 
 type ExternalType struct {
 	Imports []gen.Pkg
@@ -77,3 +80,36 @@ func getExternalConvert(typ string) gen.Converter {
 
 	return ext.Convert
 }
+
+type sliceProtoConv struct {
+	Type string
+	sync.Once
+}
+
+func getSliceProtoConv(g *GenType, typ string) gen.Converter {
+	c := &sliceProtoConv{
+		Type: typ,
+	}
+
+	c.Once.Do(func() {
+		g.AddImport(gen.Pkg{
+			Fullname: SlicePkg,
+		})
+	})
+
+	return c
+}
+
+// From implements gen.Converter.
+func (s *sliceProtoConv) From(in string) string {
+	return "slice.Map(" + in + ", " + s.Type + "ToProto)"
+}
+
+// To implements gen.Converter.
+func (s *sliceProtoConv) To(in string) string {
+	return "slice.Map(" + in + ", " + s.Type + "FromProto)"
+}
+
+var (
+	_ gen.Converter = (*sliceProtoConv)(nil)
+)

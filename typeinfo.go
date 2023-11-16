@@ -3,6 +3,7 @@ package main
 import (
 	"go/ast"
 	"go/types"
+	"strings"
 )
 
 type typeInfo struct {
@@ -44,6 +45,43 @@ func (t *typeInfo) Methods() []*types.MethodSet {
 		msets = append(msets, mset)
 	}
 	return msets
+}
+
+// FieldByName
+func (t *typeInfo) FieldByName(name string) (*types.Var, bool) {
+	if v, ok := fieldAlias[name]; ok {
+		name = v
+	}
+
+	if alias, ok := hasSuffixAlias(name); ok {
+		name = alias
+	}
+
+	if s, ok := t.typ.(*types.Struct); ok {
+		for i := 0; i < s.NumFields(); i++ {
+			if s.Field(i).Name() == name {
+				return s.Field(i), true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+var (
+	fieldAlias = map[string]string{
+		"Id": "ID",
+	}
+)
+
+func hasSuffixAlias(name string) (string, bool) {
+	for k, v := range fieldAlias {
+		if strings.HasSuffix(name, k) {
+			return strings.TrimSuffix(name, k) + v, true
+		}
+	}
+
+	return "", false
 }
 
 func hasVariadic(fieldList *ast.FieldList) bool {

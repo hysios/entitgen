@@ -20,6 +20,7 @@ import (
 
 type EntitGen struct {
 	PkgName      string
+	ProjectDir   string
 	Output       string
 	ProtobufType string
 	ModelType    string
@@ -94,13 +95,24 @@ func (g *EntitGen) Run() error {
 
 // parsePackage parses the package in the given directory.
 func (g *EntitGen) parsePackage(dir ...string) ([]*packages.Package, error) {
-	cfg := &packages.Config{Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports | packages.NeedDeps | packages.NeedExportFile | packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedTypesSizes}
+	cfg := &packages.Config{
+		Mode: packages.NeedName |
+			packages.NeedFiles |
+			packages.NeedCompiledGoFiles |
+			packages.NeedImports |
+			packages.NeedDeps |
+			packages.NeedExportFile |
+			packages.NeedTypes |
+			packages.NeedSyntax |
+			packages.NeedTypesInfo |
+			packages.NeedTypesSizes,
+	}
 	pkgs, err := packages.Load(cfg, dir...)
 	if err != nil {
 		return nil, err
 	}
 	if packages.PrintErrors(pkgs) > 0 {
-		return nil, err
+		// return nil, err
 	}
 
 	return pkgs, nil
@@ -145,6 +157,7 @@ func (g *EntitGen) buildTypeInfos(pkgs []*packages.Package) (typeinfos map[strin
 						typ: T,
 					})
 				case *types.Named:
+				NameAgain:
 					switch x := T.Underlying().(type) {
 					case *types.Signature:
 						names, _ := funcsByType.At(T).([]string)
@@ -154,16 +167,23 @@ func (g *EntitGen) buildTypeInfos(pkgs []*packages.Package) (typeinfos map[strin
 					case *types.Struct:
 						names, _ := structsByType.At(T).([]string)
 						names = append(names, name)
-						structsByType.Set(T, names)
+						structsByType.Set(x, names)
 						typeinfos[name] = &typeInfo{
 							pkg:   object.Pkg(),
 							name:  name,
 							typ:   x,
 							scope: scope,
 						}
-
+					case *types.Named:
+						T = x.Underlying()
+						goto NameAgain
+					case *types.Slice:
+						log.Printf("slice type: %s %T", x, x)
+					case *types.Interface:
+					case *types.Basic:
+						log.Printf("basic type: %s %T", x, x)
 					default:
-						log.Printf("unknown type: %s %T", T, T)
+						log.Printf("unknown type: %s %T", x, x)
 					}
 				case *types.Map:
 				default:
@@ -200,6 +220,7 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 			PkgName:   filepath.Base(g.Output),
 			PbPkgName: "pb",
 			Options:   g.Options,
+			models:    modelInfos,
 		}
 
 		genType.AddImport(gen.Pkg{
@@ -215,6 +236,13 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 			if g.suppressInclude(field.Name(), modelType) {
 				// if g.Options.Suppress.Include(field.Name(), modelType) {
 				continue
+			}
+
+			if modTyp, ok := modelInfos[typ.name]; ok {
+				if _, ok := modTyp.FieldByName(field.Name()); !ok {
+					log.Printf("not found field %s in model %s", field.Name(), typ.name)
+					continue
+				}
 			}
 
 			var (
@@ -249,11 +277,23 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 				}
 			case isSliceType(field.Type()):
 				// convType = field.Type().String()
+
 				elemType := field.Type().(*types.Slice).Elem()
-				convType = gormSliceType(elemType)
-				genType.AddImport(gen.Pkg{
-					Fullname: "gorm.io/datatypes",
-				})
+				if g.isEmbeddedField(field.Name()) {
+					convType = gormSliceType(elemType)
+					genType.AddImport(gen.Pkg{
+						Fullname: "gorm.io/datatypes",
+					})
+				} else {
+					if typ, ok := convertModelType(modelInfos, elemType); ok {
+						convType = "[]*" + typ.name
+						conv := getSliceProtoConv(genType, typ.name)
+						convKey := fieldkey(field.Name(), convType)
+						genType.AddConv(convKey, conv)
+					} else {
+						convType = getSliceType(elemType)
+					}
+				}
 			case isMapType(field.Type()):
 				key, value := getMapType(field.Type())
 				// convType = "map[" + key.String() + "]" + getTypeName(value)
@@ -333,6 +373,9 @@ func getTypeName(value types.Type) string {
 		return "[]" + getTypeName(x.Elem())
 	case *types.Map:
 		return "map[" + getTypeName(x.Key()) + "]" + getTypeName(x.Elem())
+	case *types.Struct:
+		n, _ := getStructType(x.Underlying())
+		return n
 	default:
 		log.Printf("unknown type: %s %T", value, value)
 		return ""
@@ -376,6 +419,20 @@ func (g *EntitGen) suppressInclude(field, model string) bool {
 	return false
 }
 
+// isEmbeddedField
+func (g *EntitGen) isEmbeddedField(field string) bool {
+	if g.Options.NoEmbed == nil {
+		return true
+	}
+
+	for _, noembed := range g.Options.NoEmbed {
+		if noembed == field {
+			return false
+		}
+	}
+	return true
+}
+
 // GetFilename returns the filename of the type.
 func (t *typeInfo) GetFilename() string {
 	var b bytes.Buffer
@@ -414,4 +471,21 @@ func toNullType(typ string) string {
 // fromNullType returns the null type of the given type.
 func fromNullType(typ string) string {
 	return "null.NullTo" + strings.TrimPrefix(nullType(typ), "sql.Null")
+}
+
+// convertModelType
+func convertModelType(infos map[string]*typeInfo, typ types.Type) (*typeInfo, bool) {
+	typName := pureName(getTypeName(typ))
+
+	if tt, ok := infos[typName]; ok {
+		return tt, true
+	}
+
+	return nil, false
+}
+
+// pureName
+func pureName(name string) string {
+	ss := strings.Split(name, ".")
+	return ss[len(ss)-1]
 }

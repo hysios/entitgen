@@ -2,36 +2,11 @@
 package out
 
 import (
-	"database/sql"
-	"time"
-
+	"github.com/akrennmair/slice"
 	pb "github.com/hysios/entitgen/example/gen/proto"
 	"github.com/hysios/entitgen/null"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/datatypes"
 )
-
-type User struct {
-	ID          uint
-	Name        string
-	Username    string
-	Namespace   string
-	Nickname    string
-	Email       string
-	Password    sql.NullString
-	Avatar      string
-	Phone       string
-	Address     string
-	Description string
-	Score       float64
-	Role        int32
-	IsActive    bool
-	InScopes    datatypes.JSONSlice[string]
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	MemberID    uint
-	Member      *Member
-}
 
 // ToProto converts the model to protobuf type.
 func (u *User) ToProto() *pb.User {
@@ -55,6 +30,7 @@ func (u *User) ToProto() *pb.User {
 		UpdatedAt:   timestamppb.New(u.UpdatedAt),
 		MemberId:    uint32(u.MemberID),
 		Member:      u.Member.ToProto(),
+		Friends:     slice.Map(u.Friends, FriendToProto),
 	}
 }
 
@@ -80,9 +56,22 @@ func (u *User) FromProto(pUser *pb.User) *User {
 		UpdatedAt:   pUser.UpdatedAt.AsTime(),
 		MemberID:    uint(pUser.MemberId),
 		Member:      (*Member)(nil).FromProto(pUser.Member),
+		Friends:     slice.Map(pUser.Friends, FriendFromProto),
 	}
 }
 
 func UserFromProto(pUser *pb.User) *User {
 	return (*User)(nil).FromProto(pUser)
+}
+
+func UserToProto(user *User) *pb.User {
+	return user.ToProto()
+}
+
+func UserListFrom(users []*pb.User) []*User {
+	return slice.Map(users, UserFromProto)
+}
+
+func UserListToProto(users []*User) []*pb.User {
+	return slice.Map(users, UserToProto)
 }

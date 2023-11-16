@@ -962,6 +962,40 @@ func (m *User) validate(all bool) error {
 		}
 	}
 
+	for idx, item := range m.GetFriends() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, UserValidationError{
+						field:  fmt.Sprintf("Friends[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, UserValidationError{
+						field:  fmt.Sprintf("Friends[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return UserValidationError{
+					field:  fmt.Sprintf("Friends[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if m.Password != nil {
 		// no validation rules for Password
 	}
@@ -1233,6 +1267,114 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MemberValidationError{}
+
+// Validate checks the field values on Friend with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Friend) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Friend with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in FriendMultiError, or nil if none found.
+func (m *Friend) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Friend) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for UserId
+
+	// no validation rules for Username
+
+	// no validation rules for Nickname
+
+	// no validation rules for Avatar
+
+	if len(errors) > 0 {
+		return FriendMultiError(errors)
+	}
+
+	return nil
+}
+
+// FriendMultiError is an error wrapping multiple validation errors returned by
+// Friend.ValidateAll() if the designated constraints aren't met.
+type FriendMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m FriendMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m FriendMultiError) AllErrors() []error { return m }
+
+// FriendValidationError is the validation error returned by Friend.Validate if
+// the designated constraints aren't met.
+type FriendValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e FriendValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e FriendValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e FriendValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e FriendValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e FriendValidationError) ErrorName() string { return "FriendValidationError" }
+
+// Error satisfies the builtin error interface
+func (e FriendValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sFriend.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = FriendValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = FriendValidationError{}
 
 // Validate checks the field values on LoginRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, the first

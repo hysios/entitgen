@@ -406,6 +406,13 @@
                 },
                 "member": {
                   "$ref": "#/definitions/userMember"
+                },
+                "friends": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/userFriend"
+                  }
                 }
               },
               "title": "The user resource which replaces the resource on the server."
@@ -467,6 +474,28 @@
           "type": "string"
         },
         "newPassword": {
+          "type": "string"
+        }
+      }
+    },
+    "userFriend": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "username": {
+          "type": "string"
+        },
+        "nickname": {
+          "type": "string"
+        },
+        "avatar": {
           "type": "string"
         }
       }
@@ -670,6 +699,13 @@
         },
         "member": {
           "$ref": "#/definitions/userMember"
+        },
+        "friends": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userFriend"
+          }
         }
       }
     }
