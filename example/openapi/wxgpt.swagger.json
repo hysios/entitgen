@@ -377,6 +377,10 @@
                 "role": {
                   "$ref": "#/definitions/userRole"
                 },
+                "age": {
+                  "type": "integer",
+                  "format": "int32"
+                },
                 "isActive": {
                   "type": "boolean"
                 },
@@ -385,6 +389,10 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "expiresAt": {
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "permissions": {
                   "type": "object",
@@ -405,6 +413,9 @@
                   "format": "int64"
                 },
                 "member": {
+                  "$ref": "#/definitions/userMember"
+                },
+                "leader": {
                   "$ref": "#/definitions/userMember"
                 },
                 "friends": {
@@ -670,6 +681,10 @@
         "role": {
           "$ref": "#/definitions/userRole"
         },
+        "age": {
+          "type": "integer",
+          "format": "int32"
+        },
         "isActive": {
           "type": "boolean"
         },
@@ -678,6 +693,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
         },
         "permissions": {
           "type": "object",
@@ -698,6 +717,9 @@
           "format": "int64"
         },
         "member": {
+          "$ref": "#/definitions/userMember"
+        },
+        "leader": {
           "$ref": "#/definitions/userMember"
         },
         "friends": {

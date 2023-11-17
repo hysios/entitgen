@@ -11,13 +11,14 @@ import (
 type GenMethodContext struct {
 	gen.Named
 
-	Name    string
-	VarName string
-	Rece    *gen.Var
-	Outputs []*gen.Var
-	Inputs  []*gen.Var
-	Fields  []*gen.Field
-	types   *GenType
+	Name      string
+	ModelName string
+	VarName   string
+	Rece      *gen.Var
+	Outputs   []*gen.Var
+	Inputs    []*gen.Var
+	Fields    []*gen.Field
+	types     *GenType
 }
 
 type Nameds map[string]bool

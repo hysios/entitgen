@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 
+	pb "github.com/hysios/entitgen/example/gen/proto"
 	"gorm.io/datatypes"
 )
 
@@ -31,11 +32,26 @@ type User struct {
 	Description string
 	Score       float64
 	Role        int32
+	Age         uint64
 	IsActive    bool
+	ExpiresAt   sql.NullTime
 	InScopes    datatypes.JSONSlice[string]
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	MemberID    uint
 	Member      *Member
+	Leader      datatypes.JSONType[*pb.Member]
 	Friends     []*Friend
+}
+
+type Agent struct {
+	Agentid          int    `json:"agentid"`
+	Name             string `json:"name"`
+	RoundLogoURL     string `json:"roundLogoUrl"`
+	SquareLogoURL    string `json:"squareLogoUrl"`
+	AuthMode         int    `json:"authMode"`
+	IsCustomizedApp  bool   `json:"isCustomizedApp"`
+	AuthFromThirdapp bool   `json:"authFromThirdapp"`
+	// Privilege        datatypes.JSONType[Privilege]  `json:"privilege"`
+	// SharedFrom       datatypes.JSONType[SharedFrom] `json:"sharedFrom"`
 }

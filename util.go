@@ -18,12 +18,79 @@ var conventionTypes = map[string]string{
 	"*bool":    "sql.NullBool",
 }
 
-func conventionType(typ string) (string, bool) {
+func conventionType(typ string, modelType *types.Var) (string, bool) {
+	if modelType == nil {
+		t, ok := conventionTypes[typ]
+		if ok {
+			return t, true
+		}
+	}
+
+	modTyp := getTypeName(modelType.Type())
+	if modTyp == typ {
+		return typ, false
+	}
+
 	t, ok := conventionTypes[typ]
 	if ok {
-		return t, true
+		if t == modTyp {
+			return t, true
+		}
 	}
+
+	switch kind(typ) {
+	case "int":
+		if kind(modTyp) == "int" || kind(modTyp) == "uint" {
+			return modTyp, true
+		}
+		return typ, false
+	case "uint":
+		if kind(modTyp) == "int" || kind(modTyp) == "uint" {
+			return modTyp, true
+		}
+		return typ, false
+	case "float":
+		if kind(modTyp) == "float" {
+			return modTyp, true
+		}
+		return typ, false
+		// case "bool":
+		// 	if kind(modTyp) != "bool" {
+		// 		return typ, false
+		// 	}
+		// 	return modTyp, true
+		// case "string":
+		// 	if kind(modTyp) != "string" {
+		// 		return typ, false
+		// 	}
+		// 	return modTyp, true
+		// case "byte":
+		// 	if kind(modTyp) != "byte" {
+		// 		return typ, false
+		// 	}
+		// 	return modTyp, true
+	}
+
 	return typ, false
+}
+
+func kind(typ string) string {
+	switch typ {
+	case "int", "int8", "int16", "int32", "int64":
+		return "int"
+	case "uint", "uint8", "uint16", "uint32", "uint64":
+		return "uint"
+	case "float32", "float64":
+		return "float"
+	case "bool":
+		return "bool"
+	case "string":
+		return "string"
+	case "byte", "rune":
+		return "byte"
+	}
+	return ""
+
 }
 
 type matchFunc func(string) bool
@@ -83,6 +150,15 @@ func isScalarType(typ string) bool {
 func isSliceType(typ types.Type) bool {
 	_, ok := typ.(*types.Slice)
 	return ok
+}
+
+func isGormExtType(typ types.Type, modFieldTyp types.Type) bool {
+	if modFieldTyp == nil {
+		return false
+	}
+
+	typName := modFieldTyp.String()
+	return strings.HasPrefix(typName, "gorm.io/datatypes.JSONType[")
 }
 
 func isMapType(typ types.Type) bool {

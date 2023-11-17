@@ -6,6 +6,7 @@ import (
 	pb "github.com/hysios/entitgen/example/gen/proto"
 	"github.com/hysios/entitgen/null"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/datatypes"
 )
 
 // ToProto converts the model to protobuf type.
@@ -24,12 +25,15 @@ func (u *User) ToProto() *pb.User {
 		Description: u.Description,
 		Score:       float32(u.Score),
 		Role:        pb.Role(u.Role),
+		Age:         int32(u.Age),
 		IsActive:    u.IsActive,
 		InScopes:    u.InScopes,
+		ExpiresAt:   null.SQLTimeToPbtime(u.ExpiresAt),
 		CreatedAt:   timestamppb.New(u.CreatedAt),
 		UpdatedAt:   timestamppb.New(u.UpdatedAt),
 		MemberId:    uint32(u.MemberID),
 		Member:      u.Member.ToProto(),
+		Leader:      u.Leader.Data(),
 		Friends:     slice.Map(u.Friends, FriendToProto),
 	}
 }
@@ -50,12 +54,15 @@ func (u *User) FromProto(pUser *pb.User) *User {
 		Description: pUser.Description,
 		Score:       float64(pUser.Score),
 		Role:        int32(pUser.Role),
+		Age:         uint64(pUser.Age),
 		IsActive:    pUser.IsActive,
 		InScopes:    pUser.InScopes,
+		ExpiresAt:   null.PbtimeToSQLTime(pUser.ExpiresAt),
 		CreatedAt:   pUser.CreatedAt.AsTime(),
 		UpdatedAt:   pUser.UpdatedAt.AsTime(),
 		MemberID:    uint(pUser.MemberId),
 		Member:      (*Member)(nil).FromProto(pUser.Member),
+		Leader:      datatypes.NewJSONType(pUser.Leader),
 		Friends:     slice.Map(pUser.Friends, FriendFromProto),
 	}
 }

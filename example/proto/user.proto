@@ -169,14 +169,17 @@ message User {
   string description = 11;
   float score = 12;
   Role role = 13;
-  bool is_active = 14;
-  repeated string in_scopes = 15;
-  map<string, PermissionList> permissions = 16;
-  google.protobuf.Timestamp created_at = 17;
-  google.protobuf.Timestamp updated_at = 18;
-  uint32 member_id = 19;
-  Member member = 20;
-  repeated Friend friends = 21;
+  int32 age = 14;
+  bool is_active = 15;
+  repeated string in_scopes = 16;
+  google.protobuf.Timestamp expires_at = 17;
+  map<string, PermissionList> permissions = 18;
+  google.protobuf.Timestamp created_at = 19;
+  google.protobuf.Timestamp updated_at = 20;
+  uint32 member_id = 21;
+  Member member = 22;
+  Member leader = 23;
+  repeated Friend friends = 24;
 }
 
 message Member {
@@ -184,8 +187,8 @@ message Member {
   uint32 user_id = 2;
   uint32 enterprise_id = 3;
   User user = 4;
-  google.protobuf.Timestamp createdAt = 6;
-  google.protobuf.Timestamp updatedAt = 7;
+  google.protobuf.Timestamp createdAt = 5;
+  google.protobuf.Timestamp updatedAt = 6;
 }
 
 message Friend {

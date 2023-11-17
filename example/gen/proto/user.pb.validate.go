@@ -825,7 +825,38 @@ func (m *User) validate(all bool) error {
 
 	// no validation rules for Role
 
+	// no validation rules for Age
+
 	// no validation rules for IsActive
+
+	if all {
+		switch v := interface{}(m.GetExpiresAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UserValidationError{
+					field:  "ExpiresAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UserValidationError{
+					field:  "ExpiresAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetExpiresAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UserValidationError{
+				field:  "ExpiresAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	{
 		sorted_keys := make([]string, len(m.GetPermissions()))
@@ -956,6 +987,35 @@ func (m *User) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return UserValidationError{
 				field:  "Member",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetLeader()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UserValidationError{
+					field:  "Leader",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UserValidationError{
+					field:  "Leader",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetLeader()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UserValidationError{
+				field:  "Leader",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

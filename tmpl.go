@@ -6,7 +6,7 @@ package {{ .PkgName }}
 {{ .GoImports }}
 
 {{ if not .NoModel }} 
-type {{.Name}} struct { {{range $x := .Fields}}
+type {{.ModelName}} struct { {{range $x := .Fields}}
 	{{ $x.DeclareField -}} 
 {{end}}
 }
@@ -46,19 +46,19 @@ const (
 	}
 }`
 
-	modelFromProtoTemplate = `func {{ .Name }}FromProto({{ .InputArgs }}) {{ .Return}} {
-	return (*{{.Name}})(nil).FromProto({{ .InputVals }})
+	modelFromProtoTemplate = `func {{ .ModelName }}FromProto({{ .InputArgs }}) {{ .Return}} {
+	return (*{{.ModelName}})(nil).FromProto({{ .InputVals }})
 }`
 
-	modelToProtoTemplate = `func {{ .Name }}ToProto({{ .InputArgs }}) {{ .Return }} {
+	modelToProtoTemplate = `func {{ .ModelName }}ToProto({{ .InputArgs }}) {{ .Return }} {
 	return {{ .VarName }}.ToProto()
 }`
 
-	modelListFromTemplate = `func {{ .Name }}ListFrom({{ .InputArgs }}) {{ .Return }} {
-	return slice.Map({{.VarName}}, {{ .Name }}FromProto)
+	modelListFromTemplate = `func {{ .ModelName }}ListFrom({{ .InputArgs }}) {{ .Return }} {
+	return slice.Map({{.VarName}}, {{ .ModelName }}FromProto)
 }`
 
-	modelListToTemplate = `func {{ .Name }}ListToProto({{ .InputArgs }}) {{ .Return }} {
-	return slice.Map({{.VarName}}, {{ .Name }}ToProto)
+	modelListToTemplate = `func {{ .ModelName }}ListToProto({{ .InputArgs }}) {{ .Return }} {
+	return slice.Map({{.VarName}}, {{ .ModelName }}ToProto)
 }`
 )

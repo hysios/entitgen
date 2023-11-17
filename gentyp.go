@@ -13,6 +13,7 @@ type GenType struct {
 	gen.TypeConverts
 
 	Name      string
+	ModelName string
 	PkgName   string
 	PbPkgName string
 	Fields    []*gen.Field
@@ -69,7 +70,7 @@ func (t *GenType) ToProtoMethod() string {
 			Rece: &gen.Var{
 				Name:    t.Name,
 				Pointer: true,
-				Type:    t.Name,
+				Type:    t.ModelName,
 			},
 			Fields: t.Fields,
 			types:  t,
@@ -126,7 +127,7 @@ func (t *GenType) FromProtoMethod() string {
 			Rece: &gen.Var{
 				Name:    t.Name,
 				Pointer: true,
-				Type:    t.Name,
+				Type:    t.ModelName,
 			},
 			Fields: t.Fields,
 			types:  t,
@@ -134,7 +135,7 @@ func (t *GenType) FromProtoMethod() string {
 				{
 					Name:    strings.ToLower(t.Name),
 					Pointer: true,
-					Type:    t.Name,
+					Type:    t.ModelName,
 				},
 			},
 			Inputs: []*gen.Var{
@@ -160,11 +161,12 @@ func (t *GenType) ModelFromProtoMethod() string {
 		tmpl = template.Must(template.New("modelFromProto").Parse(modelFromProtoTemplate))
 		buf  = &bytes.Buffer{}
 		ctx  = &GenMethodContext{
-			Name: t.Name,
+			Name:      t.Name,
+			ModelName: t.ModelName,
 			Rece: &gen.Var{
 				Name:    t.Name,
 				Pointer: true,
-				Type:    t.Name,
+				Type:    t.ModelName,
 			},
 			Fields: t.Fields,
 			types:  t,
@@ -172,7 +174,7 @@ func (t *GenType) ModelFromProtoMethod() string {
 				{
 					Name:    strings.ToLower(t.Name),
 					Pointer: true,
-					Type:    t.Name,
+					Type:    t.ModelName,
 				},
 			},
 			Inputs: []*gen.Var{
@@ -198,7 +200,8 @@ func (t *GenType) ModelToProtoMethod() string {
 		tmpl = template.Must(template.New("modelToProtoMethod").Parse(modelToProtoTemplate))
 		buf  = &bytes.Buffer{}
 		ctx  = &GenMethodContext{
-			Name: t.Name,
+			Name:      t.Name,
+			ModelName: t.ModelName,
 			Rece: &gen.Var{
 				Name:    t.Name,
 				Pointer: true,
@@ -218,7 +221,7 @@ func (t *GenType) ModelToProtoMethod() string {
 				&gen.Var{
 					Name:    strings.ToLower(t.Name),
 					Pointer: true,
-					Type:    t.Name,
+					Type:    t.ModelName,
 				},
 			},
 		}
@@ -237,7 +240,8 @@ func (t *GenType) ModelListFromMethod() string {
 		tmpl = template.Must(template.New("modelListFromMethod").Parse(modelListFromTemplate))
 		buf  = &bytes.Buffer{}
 		ctx  = &GenMethodContext{
-			Name: t.Name,
+			Name:      t.Name,
+			ModelName: t.ModelName,
 			Rece: &gen.Var{
 				Name:    t.Name,
 				Pointer: true,
@@ -250,7 +254,7 @@ func (t *GenType) ModelListFromMethod() string {
 				{
 					Name:    strings.ToLower(t.Name),
 					Pointer: true,
-					Type:    t.Name,
+					Type:    t.ModelName,
 					Slice:   []string{""},
 				},
 			},
@@ -278,7 +282,8 @@ func (t *GenType) ModelListToMethod() string {
 		tmpl = template.Must(template.New("modelListToMethod").Parse(modelListToTemplate))
 		buf  = &bytes.Buffer{}
 		ctx  = &GenMethodContext{
-			Name: t.Name,
+			Name:      t.Name,
+			ModelName: t.ModelName,
 			Rece: &gen.Var{
 				Name:    t.Name,
 				Pointer: true,
@@ -299,7 +304,7 @@ func (t *GenType) ModelListToMethod() string {
 				&gen.Var{
 					Name:    strings.ToLower(plural(t.Name)),
 					Pointer: true,
-					Type:    t.Name,
+					Type:    t.ModelName,
 					Slice:   []string{""},
 				},
 			},
@@ -321,7 +326,7 @@ func (m *GenType) NoModel() bool {
 		}
 	}
 
-	if _, ok := m.models[m.Name]; ok {
+	if _, ok := m.models[m.ModelName]; ok {
 		return true
 	}
 

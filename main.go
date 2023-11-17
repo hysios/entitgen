@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"path/filepath"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type arrayFlags []string
@@ -20,6 +22,7 @@ func (i *arrayFlags) Set(value string) error {
 
 var myFlags arrayFlags
 var (
+	debug            int
 	genPath          string
 	pkgName          string
 	protobufPath     string
@@ -32,16 +35,24 @@ var (
 	genSlice         bool
 )
 
-func main() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
+var log = zap.S()
 
+func initLog(lvl int) *zap.SugaredLogger {
+	cfg := zap.NewDevelopmentConfig()
+	cfg.Level.SetLevel(zapcore.Level(lvl))
+	log, _ := cfg.Build()
+	return log.Sugar()
+}
+
+func main() {
 	parseArgs()
+	log = initLog(debug)
 
 	opts, err := parseOptions(options)
 	if err != nil {
 		log.Fatalf("parse options failed: %v", err)
 	}
-	log.Printf("Options: %v", opts)
+	log.Debugf("Options: %v", opts)
 	var gen = EntitGen{
 		PkgName:      pkgName,
 		Output:       genPath,
@@ -72,6 +83,7 @@ func parseArgs() {
 	flag.BoolVar(&genSlice, "slice", false, "generate slice type")
 	flag.Var(&options, "option", "option")
 	flag.Var(&options, "O", "option")
+	flag.IntVar(&debug, "debug", 0, "debug level")
 
 	flag.Parse()
 
