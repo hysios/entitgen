@@ -27,10 +27,19 @@ type EntitGen struct {
 	ProtoPath    string
 	Options      Options
 	PbPkgName    string
+	Debug        bool
+}
+
+func (g *EntitGen) init() {
+	if g.Debug {
+		log = initLog(-1)
+	}
 }
 
 func (g *EntitGen) Run() error {
-	protoPaths := strings.Split(g.ProtoGenPath, ";")
+	g.init()
+
+	protoPaths := strings.Split(g.ProtoGenPath, ",")
 
 	pkgs, err := g.parsePackage(protoPaths...)
 	if err != nil {
@@ -106,7 +115,10 @@ func (g *EntitGen) parsePackage(dir ...string) ([]*packages.Package, error) {
 			packages.NeedTypesInfo |
 			packages.NeedTypesSizes,
 	}
-	pkgs, err := packages.Load(cfg, dir...)
+
+	dirs := readSubDir(dir)
+
+	pkgs, err := packages.Load(cfg, dirs...)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +127,32 @@ func (g *EntitGen) parsePackage(dir ...string) ([]*packages.Package, error) {
 	}
 
 	return pkgs, nil
+}
+
+func readSubDir(dirs []string) []string {
+	var (
+		subDirs []string
+		rel     bool
+		err     error
+	)
+	for _, dir := range dirs {
+		rel = strings.HasPrefix(dir, ".")
+		if rel {
+			dir, err = filepath.Abs(dir)
+			if err != nil {
+				continue
+			}
+		}
+		// subDirs = append(subDirs, dir)
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+
+			if info.IsDir() {
+				subDirs = append(subDirs, path)
+			}
+			return nil
+		})
+	}
+	return subDirs
 }
 
 // buildTypeInfos builds the typeinfos for the given packages.
@@ -134,15 +172,16 @@ func (g *EntitGen) buildTypeInfos(pkgs []*packages.Package) (typeinfos map[strin
 
 		scope := pkg.Types.Scope()
 		for _, name := range scope.Names() {
-
 			if unicode.IsUpper(([]rune)(name)[0]) {
 				var (
 					object = scope.Lookup(name)
 					T      = object.Type()
 				)
+				log.Debugf("object %s by %T", name, T)
 				switch T.(type) {
 				case *types.Signature:
 					names, _ := funcsByType.At(T).([]string)
+					log.Debugf("func %s %T", name, T)
 					names = append(names, name)
 					funcsByType.Set(T, names)
 				case *types.Struct:
@@ -150,8 +189,9 @@ func (g *EntitGen) buildTypeInfos(pkgs []*packages.Package) (typeinfos map[strin
 					names = append(names, name)
 					structsByType.Set(T, names)
 					nameTypes = append(nameTypes, &typeInfo{
-						pkg:  object.Pkg(),
-						name: name,
+						pkg:     object.Pkg(),
+						name:    name,
+						pkgName: pkg.Name,
 						// alias: getAlias(object.Pkg()),
 						typ: T,
 					})
@@ -161,17 +201,19 @@ func (g *EntitGen) buildTypeInfos(pkgs []*packages.Package) (typeinfos map[strin
 					case *types.Signature:
 						names, _ := funcsByType.At(T).([]string)
 						names = append(names, name)
+						log.Debugf("func %s %T", name, T)
 						funcsByType.Set(T, names)
-
 					case *types.Struct:
 						names, _ := structsByType.At(T).([]string)
 						names = append(names, name)
 						structsByType.Set(x, names)
 						typeinfos[name] = &typeInfo{
-							pkg:   object.Pkg(),
-							name:  name,
-							typ:   x,
-							scope: scope,
+							pkg:     object.Pkg(),
+							pkgName: pkg.Name,
+							name:    name,
+							typ:     x,
+							scope:   scope,
+							methods: typeutil.IntuitiveMethodSet(T, nil),
 						}
 					case *types.Named:
 						T = x.Underlying()
@@ -180,7 +222,18 @@ func (g *EntitGen) buildTypeInfos(pkgs []*packages.Package) (typeinfos map[strin
 						log.Debugf("slice type: %s %T", x, x)
 					case *types.Interface:
 					case *types.Basic:
-						log.Debugf("basic type: %s %T", x, x)
+						log.Debugf("alias type: %s %T", x, x)
+						names, _ := structsByType.At(T).([]string)
+						names = append(names, name)
+						structsByType.Set(x, names)
+						typeinfos[name] = &typeInfo{
+							pkg:     object.Pkg(),
+							pkgName: pkg.Name,
+							name:    name,
+							typ:     x,
+							scope:   scope,
+							methods: typeutil.IntuitiveMethodSet(T, nil),
+						}
 					default:
 						log.Debugf("unknown type: %s %T", x, x)
 					}
@@ -213,14 +266,14 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 			Name:      typ.name,
 			ModelName: modelType,
 			PkgName:   filepath.Base(g.Output),
-			PbPkgName: "pb",
+			PbPkgName: typ.pkgName,
 			Options:   g.Options,
 			models:    modelInfos,
 		}
 
 		genType.AddImport(gen.Pkg{
 			Fullname: typ.pkg.Path(),
-			Alias:    "pb",
+			Alias:    typ.pkgName,
 		})
 
 		for _, field := range typ.Fields() {
@@ -228,6 +281,8 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 				continue
 			}
 
+			n := field.Name()
+			_ = n
 			if g.suppressInclude(field.Name(), modelType) {
 				// if g.Options.Suppress.Include(field.Name(), modelType) {
 				continue
@@ -252,7 +307,7 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 			_ = isPtr
 			switch {
 			case isScalarType(field.Type().String()):
-				convType, ok = conventionType(field.Type().String(), modFieldTyp)
+				convType, ok = conventionType(field, modFieldTyp)
 				if ok {
 					if strings.HasPrefix(convType, "sql.") { // sql Null Values
 						convKey := fieldkey(field.Name(), convType)
@@ -298,16 +353,11 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 				genType.AddImport(gen.Pkg{
 					Fullname: "gorm.io/datatypes",
 				})
-				// convType = field.Type().String()
-			// case isGormExtType(field.Type(), modFieldTyp.Type()):
-			// 	convType = field.Type().String()
-
 			case isExternalType(field.Type().String(), modFieldTyp):
 				extTyp, ok := getExternalType(field.Type().String(), modFieldTyp)
 				if !ok {
 					return nil, fmt.Errorf("not found external type: %s", field.Type().String())
 				}
-
 				genType.AddImport(gen.Pkg{
 					Fullname: extTyp.Type.PkgName,
 				})
@@ -324,10 +374,31 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 					genType.AddImport(imp)
 				}
 			case isAliasType(field.Type()):
-				convType = field.Type().Underlying().String()
-				// fromType := field.Type().String()
-				convKey := fieldkey(field.Name(), convType)
-				genType.AddConv(convKey, gen.TypeConv(getAliasType(field.Type()), convType))
+				t, ok := globalInfos[pureName(getTypeName(field.Type()))]
+				if !ok {
+					convType = field.Type().Underlying().String()
+					// fromType := field.Type().String()
+					convKey := fieldkey(field.Name(), convType)
+					genType.AddConv(convKey, gen.TypeConv(getAliasType(field.Type()), convType))
+				} else {
+					if checkEnumMethod(t.methods) && modFieldTyp != nil {
+						convType = field.Type().Underlying().String()
+						if kind(modFieldTyp.Type().String()) != kind(convType) {
+							convKey := fieldkey(field.Name(), convType)
+							genType.AddConv(convKey, newEnumMapConv(getAliasType(field.Type()), convType))
+						} else {
+							convType = field.Type().Underlying().String()
+							// fromType := field.Type().String()
+							convKey := fieldkey(field.Name(), convType)
+							genType.AddConv(convKey, gen.TypeConv(getAliasType(field.Type()), convType))
+						}
+					} else {
+						convType = field.Type().Underlying().String()
+						// fromType := field.Type().String()
+						convKey := fieldkey(field.Name(), convType)
+						genType.AddConv(convKey, gen.TypeConv(getAliasType(field.Type()), convType))
+					}
+				}
 			case isStructType(field.Type()):
 				// convType = field.Type().String()
 				name, stucTyp := getStructType(field.Type())
@@ -377,158 +448,6 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 		}
 
 		gens[typ.name] = genType
-		// cycleIdx[typ] = true
-
-		// genType = &GenType{
-		// 	Name:      typ.name,
-		// 	ModelName: modelType,
-		// 	PkgName:   filepath.Base(g.Output),
-		// 	PbPkgName: "pb",
-		// 	Options:   g.Options,
-		// 	models:    modelInfos,
-		// }
-
-		// genType.AddImport(gen.Pkg{
-		// 	Fullname: typ.pkg.Path(),
-		// 	Alias:    "pb",
-		// })
-
-		// for _, field := range typ.Fields() {
-		// 	if !field.Exported() {
-		// 		continue
-		// 	}
-
-		// 	if typ.name == modelType {
-		// 		if g.suppressInclude(field.Name(), modelType) {
-		// 			// if g.Options.Suppress.Include(field.Name(), modelType) {
-		// 			continue
-		// 		}
-		// 	}
-
-		// 	modTyp, found := modelInfos[typ.name]
-		// 	var modFieldTyp *types.Var
-		// 	if found {
-		// 		if modFieldTyp, found = modTyp.FieldByName(field.Name()); !found {
-		// 			log.Infof("not found field %s in model %s", field.Name(), typ.name)
-		// 			continue
-		// 		}
-		// 	}
-
-		// 	var (
-		// 		convType string
-		// 		isPtr    bool = isPointer(field.Type())
-		// 		ptr      bool
-		// 		ok       bool
-		// 	)
-
-		// 	_ = isPtr
-		// 	switch {
-		// 	case isScalarType(field.Type().String()):
-		// 		convType, ok = conventionType(field.Type().String())
-		// 		if ok {
-		// 			if strings.HasPrefix(convType, "sql.") { // sql Null Values
-		// 				convKey := fieldkey(field.Name(), convType)
-		// 				fieldType := field.Type().String()
-		// 				genType.AddConv(convKey, gen.TypeConv(
-		// 					fromNullType(fieldType),
-		// 					toNullType(fieldType),
-		// 				))
-		// 				genType.AddImport(gen.Pkg{
-		// 					Fullname: "github.com/hysios/entitgen/null",
-		// 				})
-		// 				genType.AddImport(gen.Pkg{
-		// 					Fullname: "database/sql",
-		// 				})
-		// 			} else {
-		// 				convKey := fieldkey(field.Name(), convType)
-		// 				genType.AddConv(convKey, gen.TypeConv(field.Type().String(), convType))
-		// 			}
-		// 		}
-		// 	case isSliceType(field.Type()):
-		// 		// convType = field.Type().String()
-
-		// 		elemType := field.Type().(*types.Slice).Elem()
-		// 		if g.isEmbeddedField(field.Name()) {
-		// 			convType = gormSliceType(elemType)
-		// 			genType.AddImport(gen.Pkg{
-		// 				Fullname: "gorm.io/datatypes",
-		// 			})
-		// 		} else {
-		// 			if typ, ok := convertModelType(modelInfos, elemType); ok {
-		// 				convType = "[]*" + typ.name
-		// 				conv := getSliceProtoConv(genType, typ.name)
-		// 				convKey := fieldkey(field.Name(), convType)
-		// 				genType.AddConv(convKey, conv)
-		// 			} else {
-		// 				convType = getSliceType(elemType)
-		// 			}
-		// 		}
-		// 	case isMapType(field.Type()):
-		// 		key, value := getMapType(field.Type())
-		// 		// convType = "map[" + key.String() + "]" + getTypeName(value)
-		// 		convType = gormMapType(key, value)
-		// 		genType.AddImport(gen.Pkg{
-		// 			Fullname: "gorm.io/datatypes",
-		// 		})
-		// 		// convType = field.Type().String()
-		// 	// case isGormExtType(field.Type(), modFieldTyp.Type()):
-		// 	// 	convType = field.Type().String()
-
-		// 	case isExternalType(field.Type().String(), modFieldTyp):
-		// 		extTyp, ok := getExternalType(field.Type().String(), modFieldTyp)
-		// 		if !ok {
-		// 			return nil, fmt.Errorf("not found external type: %s", field.Type().String())
-		// 		}
-
-		// 		genType.AddImport(gen.Pkg{
-		// 			Fullname: extTyp.Type.PkgName,
-		// 		})
-		// 		convType = extTyp.Type.PureType()
-		// 		ptr = extTyp.Type.Pointer
-		// 		conv := getExternalConvert(field.Type().String(), modFieldTyp)
-		// 		if conv == nil {
-		// 			return nil, fmt.Errorf("not found convert: %s", field.Type().String())
-		// 		}
-
-		// 		convKey := fieldkey(field.Name(), convType)
-		// 		genType.AddConv(convKey, conv)
-		// 		for _, imp := range extTyp.Imports {
-		// 			genType.AddImport(imp)
-		// 		}
-		// 	case isAliasType(field.Type()):
-		// 		convType = field.Type().Underlying().String()
-		// 		// fromType := field.Type().String()
-		// 		convKey := fieldkey(field.Name(), convType)
-		// 		genType.AddConv(convKey, gen.TypeConv(getAliasType(field.Type()), convType))
-		// 	case isStructType(field.Type()):
-		// 		// convType = field.Type().String()
-		// 		name, stucTyp := getStructType(field.Type())
-		// 		_, _ = name, stucTyp
-		// 		// convType = getTypeName(field.Type())
-		// 		convType = name
-		// 		ptr = true
-		// 		typeInfos = append(typeInfos, globalInfos[name])
-		// 		// modelType = name
-		// 		convKey := fieldkey(field.Name(), convType)
-		// 		genType.AddConv(convKey, gen.ProtoConv(name))
-		// 	default:
-		// 		convType = field.Type().String()
-		// 		// return nil, fmt.Errorf("unknown type: %s", field.Type().String())
-		// 	}
-
-		// 	genType.Fields = append(genType.Fields, &gen.Field{
-		// 		ID:      field.Name(),
-		// 		Name:    convertName(field.Name()),
-		// 		PbName:  field.Name(),
-		// 		Pkg:     field.Pkg().Path(),
-		// 		PbType:  field.Type().String(),
-		// 		Type:    convType,
-		// 		Pointer: ptr,
-		// 	})
-
-		// }
-
-		// gens[typ.name] = genType
 	}
 	return
 }
@@ -624,12 +543,18 @@ func nullType(typ string) string {
 		return "sql.NullString"
 	case "*int", "*int32", "*int64", "int":
 		return "sql.NullInt64"
+	case "*uint", "*uint32", "*uint64", "uint":
+		return "sql.NullInt64"
 	case "*float64", "*float32", "float64":
 		return "sql.NullFloat64"
 	case "*bool", "bool":
 		return "sql.NullBool"
 	case "*byte", "byte":
 		return "sql.NullByte"
+	case "uint32", "uint64":
+		return "sql.NullInt64"
+	case "int32", "int64":
+		return "sql.NullInt64"
 	default:
 		return ""
 	}
@@ -660,4 +585,32 @@ func convertModelType(infos map[string]*typeInfo, typ types.Type) (*typeInfo, bo
 func pureName(name string) string {
 	ss := strings.Split(name, ".")
 	return ss[len(ss)-1]
+}
+
+func checkMethod(methods []*types.Selection, name, retur string) bool {
+	for _, m := range methods {
+		fun, ok := m.Obj().(*types.Func)
+		if !ok {
+			continue
+		}
+
+		if fun.Name() != name {
+			return false
+		}
+
+		sig, ok := fun.Type().(*types.Signature)
+		if !ok {
+			continue
+		}
+
+		ret := sig.Results().At(0).String()
+		if strings.TrimSpace(strings.TrimPrefix(ret, "var ")) == retur {
+			return true
+		}
+	}
+	return false
+}
+
+func checkEnumMethod(methods []*types.Selection) bool {
+	return checkMethod(methods, "Descriptor", "google.golang.org/protobuf/reflect/protoreflect.EnumDescriptor")
 }

@@ -9,6 +9,9 @@ import (
 
 // ToProto converts the model to protobuf type.
 func (m *Member) ToProto() *pb.Member {
+	if m == nil {
+		return nil
+	}
 	return &pb.Member{
 		Id:           uint32(m.ID),
 		UserId:       uint32(m.UserID),
@@ -21,6 +24,9 @@ func (m *Member) ToProto() *pb.Member {
 
 // FromProto converts the protobuf type to model.
 func (m *Member) FromProto(pMember *pb.Member) *Member {
+	if pMember == nil {
+		return nil
+	}
 	return &Member{
 		ID:           uint(pMember.Id),
 		UserID:       uint(pMember.UserId),

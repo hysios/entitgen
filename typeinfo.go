@@ -7,12 +7,14 @@ import (
 )
 
 type typeInfo struct {
-	pkg   *types.Package
-	name  string
-	alias string
-	typ   types.Type
-	scope *types.Scope
-	funcs []*ast.FuncDecl
+	pkg     *types.Package
+	pkgName string
+	name    string
+	alias   string
+	typ     types.Type
+	scope   *types.Scope
+	funcs   []*ast.FuncDecl
+	methods []*types.Selection
 }
 
 // Fields

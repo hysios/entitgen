@@ -33,6 +33,9 @@ type {{.ModelName}} struct { {{range $x := .Fields}}
 
 const (
 	toProtoTemplate = `func ({{.Receive}}) ToProto() {{ .Return }} {
+	if {{ .ShortName }} == nil {
+		return nil
+	}
 	return {{ .OutputType }}{ 
 		{{ range .Fields }}{{.PbName}}: {{ $.FieldToProto . }},
 		{{ end }}
@@ -40,6 +43,9 @@ const (
 }`
 
 	fromProtoTemplate = `func ({{.Receive}}) FromProto({{ .InputArgs }}) {{ .Return}} {
+	if {{ .InputName }} == nil {
+		return nil
+	}
 	return {{ .OutputType }}{
 		{{ range .Fields }}{{.Name}}: {{ $.FieldToModel . }},
 		{{ end }}

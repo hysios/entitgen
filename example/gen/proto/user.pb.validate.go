@@ -821,6 +821,8 @@ func (m *User) validate(all bool) error {
 
 	// no validation rules for Description
 
+	// no validation rules for PersonId
+
 	// no validation rules for Score
 
 	// no validation rules for Role
@@ -828,6 +830,8 @@ func (m *User) validate(all bool) error {
 	// no validation rules for Age
 
 	// no validation rules for IsActive
+
+	// no validation rules for Money
 
 	if all {
 		switch v := interface{}(m.GetExpiresAt()).(type) {

@@ -11,6 +11,9 @@ import (
 
 // ToProto converts the model to protobuf type.
 func (u *User) ToProto() *pb.User {
+	if u == nil {
+		return nil
+	}
 	return &pb.User{
 		Id:          uint32(u.ID),
 		Name:        u.Name,
@@ -23,10 +26,12 @@ func (u *User) ToProto() *pb.User {
 		Phone:       u.Phone,
 		Address:     u.Address,
 		Description: u.Description,
+		PersonId:    null.NullToInt64(u.PersonID),
 		Score:       float32(u.Score),
-		Role:        pb.Role(u.Role),
+		Role:        pb.Role(pb.Role_value[u.Role]),
 		Age:         int32(u.Age),
 		IsActive:    u.IsActive,
+		Money:       u.Money,
 		InScopes:    u.InScopes,
 		ExpiresAt:   null.SQLTimeToPbtime(u.ExpiresAt),
 		CreatedAt:   timestamppb.New(u.CreatedAt),
@@ -40,6 +45,9 @@ func (u *User) ToProto() *pb.User {
 
 // FromProto converts the protobuf type to model.
 func (u *User) FromProto(pUser *pb.User) *User {
+	if pUser == nil {
+		return nil
+	}
 	return &User{
 		ID:          uint(pUser.Id),
 		Name:        pUser.Name,
@@ -52,10 +60,12 @@ func (u *User) FromProto(pUser *pb.User) *User {
 		Phone:       pUser.Phone,
 		Address:     pUser.Address,
 		Description: pUser.Description,
+		PersonID:    null.ToNullInt64(pUser.PersonId),
 		Score:       float64(pUser.Score),
-		Role:        int32(pUser.Role),
+		Role:        pb.Role_name[int32(pUser.Role)],
 		Age:         uint64(pUser.Age),
 		IsActive:    pUser.IsActive,
+		Money:       pUser.Money,
 		InScopes:    pUser.InScopes,
 		ExpiresAt:   null.PbtimeToSQLTime(pUser.ExpiresAt),
 		CreatedAt:   pUser.CreatedAt.AsTime(),

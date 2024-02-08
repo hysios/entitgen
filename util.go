@@ -11,19 +11,26 @@ var conventionTypes = map[string]string{
 	"int32":    "int",
 	"uint32":   "uint",
 	"float32":  "float64",
+	"double":   "float64",
 	"*string":  "sql.NullString",
+	"*uint":    "sql.NullInt64",
 	"*uint32":  "sql.NullInt64",
+	"*uint64":  "sql.NullInt64",
+	"*int":     "sql.NullInt64",
 	"*int32":   "sql.NullInt32",
+	"*int64":   "sql.NullInt64",
 	"*float32": "sql.NullFloat64",
 	"*bool":    "sql.NullBool",
 }
 
-func conventionType(typ string, modelType *types.Var) (string, bool) {
+func conventionType(protoType, modelType *types.Var) (string, bool) {
+	var typ = protoType.Type().String()
 	if modelType == nil {
 		t, ok := conventionTypes[typ]
 		if ok {
 			return t, true
 		}
+		return typ, false
 	}
 
 	modTyp := getTypeName(modelType.Type())
@@ -40,15 +47,23 @@ func conventionType(typ string, modelType *types.Var) (string, bool) {
 
 	switch kind(typ) {
 	case "int":
-		if kind(modTyp) == "int" || kind(modTyp) == "uint" {
+		switch kind(modTyp) {
+		case "int", "uint":
 			return modTyp, true
+		case "NullInt":
+			return modTyp, true
+		default:
+			return typ, false
 		}
-		return typ, false
 	case "uint":
-		if kind(modTyp) == "int" || kind(modTyp) == "uint" {
+		switch kind(modTyp) {
+		case "int", "uint":
 			return modTyp, true
+		case "NullInt":
+			return modTyp, true
+		default:
+			return typ, false
 		}
-		return typ, false
 	case "float":
 		if kind(modTyp) == "float" {
 			return modTyp, true
@@ -88,9 +103,17 @@ func kind(typ string) string {
 		return "string"
 	case "byte", "rune":
 		return "byte"
+	case "sql.NullInt32", "sql.NullInt64":
+		return "NullInt"
+	case "sql.NullFloat64":
+		return "NullFloat"
+	case "sql.NullBool":
+		return "NullBool"
+	case "sql.NullString":
+		return "NullString"
 	}
-	return ""
 
+	return ""
 }
 
 type matchFunc func(string) bool

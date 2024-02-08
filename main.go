@@ -22,7 +22,7 @@ func (i *arrayFlags) Set(value string) error {
 
 var myFlags arrayFlags
 var (
-	debug            int
+	debug            bool
 	genPath          string
 	pkgName          string
 	protobufPath     string
@@ -46,7 +46,6 @@ func initLog(lvl int) *zap.SugaredLogger {
 
 func main() {
 	parseArgs()
-	log = initLog(debug)
 
 	opts, err := parseOptions(options)
 	if err != nil {
@@ -61,6 +60,7 @@ func main() {
 		ProtoGenPath: protoGenPath,
 		ModelType:    modelType,
 		Options:      *opts,
+		Debug:        debug,
 	}
 
 	if err := gen.Run(); err != nil {
@@ -83,7 +83,7 @@ func parseArgs() {
 	flag.BoolVar(&genSlice, "slice", false, "generate slice type")
 	flag.Var(&options, "option", "option")
 	flag.Var(&options, "O", "option")
-	flag.IntVar(&debug, "debug", 0, "debug level")
+	flag.BoolVar(&debug, "debug", true, "debug level")
 
 	flag.Parse()
 

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "wxgpt.io/pkg/server/gen/proto/corp;corp";
+
+message Corp {
+  string name = 1;
+  string corp_id = 2;
+  string corp_secret = 3;
+  string agent_id = 4;
+  uint32 user_id = 5;
+}

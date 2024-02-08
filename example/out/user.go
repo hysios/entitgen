@@ -31,8 +31,10 @@ type User struct {
 	Address     string
 	Description string
 	Score       float64
-	Role        int32
+	Role        string
 	Age         uint64
+	Money       float64
+	PersonID    sql.NullInt32
 	IsActive    bool
 	ExpiresAt   sql.NullTime
 	InScopes    datatypes.JSONSlice[string]

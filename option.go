@@ -99,7 +99,10 @@ func init() {
 	})
 
 	GlobalOption.AddMethod("no-embed", func(opts *Options, value interface{}) error {
-		opts.NoEmbed = append(opts.NoEmbed, value.(string))
+		lines := strings.Split(value.(string), ",")
+		for _, v := range lines {
+			opts.NoEmbed = append(opts.NoEmbed, v)
+		}
 		return nil
 	})
 

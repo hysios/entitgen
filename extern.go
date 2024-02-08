@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go/types"
 	"regexp"
 	"strings"
@@ -228,6 +229,30 @@ func (s *sliceProtoConv) To(in string) string {
 	return "slice.Map(" + in + ", " + s.Type + "FromProto)"
 }
 
+type enumMapConv struct {
+	Type     string
+	alisType string
+}
+
+func newEnumMapConv(typ, alias string) *enumMapConv {
+	return &enumMapConv{
+		Type:     typ,
+		alisType: alias,
+	}
+}
+
+// From implements gen.Converter.
+func (e *enumMapConv) From(in string) string {
+	return fmt.Sprintf("%s(%s_value[%s])", e.Type, e.Type, in)
+}
+
+// pb.Role_name[int32(pUser.Role)],
+// To implements gen.Converter.
+func (e *enumMapConv) To(in string) string {
+	return fmt.Sprintf("%s_name[%s(%s)]", e.Type, e.alisType, in)
+}
+
 var (
+	_ gen.Converter = (*enumMapConv)(nil)
 	_ gen.Converter = (*sliceProtoConv)(nil)
 )

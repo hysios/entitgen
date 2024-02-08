@@ -167,19 +167,21 @@ message User {
   string phone = 9;
   string address = 10;
   string description = 11;
-  float score = 12;
-  Role role = 13;
-  int32 age = 14;
-  bool is_active = 15;
-  repeated string in_scopes = 16;
-  google.protobuf.Timestamp expires_at = 17;
-  map<string, PermissionList> permissions = 18;
-  google.protobuf.Timestamp created_at = 19;
-  google.protobuf.Timestamp updated_at = 20;
-  uint32 member_id = 21;
-  Member member = 22;
-  Member leader = 23;
-  repeated Friend friends = 24;
+  uint32 person_id = 12;
+  float score = 13;
+  Role role = 14;
+  int32 age = 15;
+  bool is_active = 16;
+  double money = 17;
+  repeated string in_scopes = 18;
+  google.protobuf.Timestamp expires_at = 19;
+  map<string, PermissionList> permissions = 20;
+  google.protobuf.Timestamp created_at = 21;
+  google.protobuf.Timestamp updated_at = 22;
+  uint32 member_id = 23;
+  Member member = 24;
+  Member leader = 25;
+  repeated Friend friends = 26;
 }
 
 message Member {

@@ -370,6 +370,10 @@
                 "description": {
                   "type": "string"
                 },
+                "personId": {
+                  "type": "integer",
+                  "format": "int64"
+                },
                 "score": {
                   "type": "number",
                   "format": "float"
@@ -383,6 +387,10 @@
                 },
                 "isActive": {
                   "type": "boolean"
+                },
+                "money": {
+                  "type": "number",
+                  "format": "double"
                 },
                 "inScopes": {
                   "type": "array",
@@ -674,6 +682,10 @@
         "description": {
           "type": "string"
         },
+        "personId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "score": {
           "type": "number",
           "format": "float"
@@ -687,6 +699,10 @@
         },
         "isActive": {
           "type": "boolean"
+        },
+        "money": {
+          "type": "number",
+          "format": "double"
         },
         "inScopes": {
           "type": "array",
