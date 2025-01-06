@@ -25,23 +25,6 @@ func (v *TypeConverts) GetConv(name string) Converter {
 	return v.converts[name]
 }
 
-// // ConvFromType
-// func (v *TypeConverts) ConvFromType(fromType string, in string) string {
-// 	if v.converts == nil {
-// 		return in
-// 	}
-// 	return v.converts[fromType].From(fromType)
-// }
-
-// // ConvToType
-// func (v *TypeConverts) ConvToType(toType string, in string) string {
-// 	if v.converts == nil {
-// 		return in
-// 	}
-
-// 	return v.converts[toType].To(toType)
-// }
-
 func TypeConv(from, to string) Converter {
 	return &simpleConv{from, to}
 }

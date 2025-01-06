@@ -7,6 +7,7 @@ import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 // imports
@@ -174,14 +175,16 @@ message User {
   bool is_active = 16;
   double money = 17;
   repeated string in_scopes = 18;
-  google.protobuf.Timestamp expires_at = 19;
-  map<string, PermissionList> permissions = 20;
-  google.protobuf.Timestamp created_at = 21;
-  google.protobuf.Timestamp updated_at = 22;
-  uint32 member_id = 23;
-  Member member = 24;
-  Member leader = 25;
-  repeated Friend friends = 26;
+  google.protobuf.Duration  period = 19;
+  google.protobuf.Timestamp expires_at = 20;
+  map<string, PermissionList> permissions = 21;
+  google.protobuf.Timestamp created_at = 22;
+  google.protobuf.Timestamp updated_at = 23;
+  google.protobuf.Timestamp expired_at = 24;
+  uint32 member_id = 25;
+  Member member = 26;
+  Member leader = 27;
+  repeated Friend friends = 28;
 }
 
 message Member {

@@ -5,6 +5,8 @@ import (
 	"github.com/akrennmair/slice"
 	pb "github.com/hysios/entitgen/example/gen/proto"
 	"github.com/hysios/entitgen/null"
+	"github.com/shopspring/decimal"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
 )
@@ -31,11 +33,13 @@ func (u *User) ToProto() *pb.User {
 		Role:        pb.Role(pb.Role_value[u.Role]),
 		Age:         int32(u.Age),
 		IsActive:    u.IsActive,
-		Money:       u.Money,
+		Money:       u.Money.InexactFloat64(),
 		InScopes:    u.InScopes,
+		Period:      durationpb.New(u.Period),
 		ExpiresAt:   null.SQLTimeToPbtime(u.ExpiresAt),
 		CreatedAt:   timestamppb.New(u.CreatedAt),
 		UpdatedAt:   timestamppb.New(u.UpdatedAt),
+		ExpiredAt:   null.SQLTimeToPbtime(u.ExpiredAt),
 		MemberId:    uint32(u.MemberID),
 		Member:      u.Member.ToProto(),
 		Leader:      u.Leader.Data(),
@@ -65,11 +69,13 @@ func (u *User) FromProto(pUser *pb.User) *User {
 		Role:        pb.Role_name[int32(pUser.Role)],
 		Age:         uint64(pUser.Age),
 		IsActive:    pUser.IsActive,
-		Money:       pUser.Money,
+		Money:       decimal.NewFromFloat(pUser.Money),
 		InScopes:    pUser.InScopes,
+		Period:      pUser.Period.AsDuration(),
 		ExpiresAt:   null.PbtimeToSQLTime(pUser.ExpiresAt),
 		CreatedAt:   pUser.CreatedAt.AsTime(),
 		UpdatedAt:   pUser.UpdatedAt.AsTime(),
+		ExpiredAt:   null.PbtimeToSQLTime(pUser.ExpiredAt),
 		MemberID:    uint(pUser.MemberId),
 		Member:      (*Member)(nil).FromProto(pUser.Member),
 		Leader:      datatypes.NewJSONType(pUser.Leader),

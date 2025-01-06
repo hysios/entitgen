@@ -322,6 +322,19 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 						genType.AddImport(gen.Pkg{
 							Fullname: "database/sql",
 						})
+					} else if convType == "decimal.Decimal" {
+						convKey := fieldkey(field.Name(), convType)
+						genType.AddConv(convKey, &externConvert{
+							toProto: func(in string) string {
+								return "decimal.NewFromFloat(" + in + ")"
+							},
+							fromProto: func(in string) string {
+								return in + ".InexactFloat64()"
+							},
+						})
+						genType.AddImport(gen.Pkg{
+							Fullname: "github.com/shopspring/decimal",
+						})
 					} else {
 						convKey := fieldkey(field.Name(), convType)
 						genType.AddConv(convKey, gen.TypeConv(field.Type().String(), convType))
@@ -438,6 +451,10 @@ func (g *EntitGen) convertPbToModel(typ *typeInfo, globalInfos map[string]*typeI
 
 	for i := 0; i < len(typeInfos); i++ {
 		typ := typeInfos[i]
+		if typ == nil {
+			continue
+		}
+
 		if cycleIdx[typ] {
 			continue
 		}

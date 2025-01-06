@@ -5,6 +5,7 @@ import (
 	"time"
 
 	pb "github.com/hysios/entitgen/example/gen/proto"
+	"github.com/shopspring/decimal"
 	"gorm.io/datatypes"
 )
 
@@ -33,13 +34,15 @@ type User struct {
 	Score       float64
 	Role        string
 	Age         uint64
-	Money       float64
+	Money       decimal.Decimal `json:"money" gorm:"type:decimal(10,2)"`
 	PersonID    sql.NullInt32
 	IsActive    bool
+	Period      time.Duration
 	ExpiresAt   sql.NullTime
 	InScopes    datatypes.JSONSlice[string]
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	ExpiredAt   sql.NullTime
 	MemberID    uint
 	Member      *Member
 	Leader      datatypes.JSONType[*pb.Member]

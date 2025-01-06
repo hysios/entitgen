@@ -207,7 +207,7 @@ func (t *GenType) ModelToProtoMethod() string {
 				Pointer: true,
 				Type:    t.Name,
 			},
-			VarName: strings.ToLower(t.Name),
+			VarName: t.suggestName(strings.ToLower(t.Name)),
 			Fields:  t.Fields,
 			types:   t,
 			Outputs: []*gen.Var{
@@ -219,7 +219,7 @@ func (t *GenType) ModelToProtoMethod() string {
 			},
 			Inputs: []*gen.Var{
 				&gen.Var{
-					Name:    strings.ToLower(t.Name),
+					Name:    t.suggestName(strings.ToLower(t.Name)),
 					Pointer: true,
 					Type:    t.ModelName,
 				},
@@ -232,6 +232,20 @@ func (t *GenType) ModelToProtoMethod() string {
 	}
 
 	return buf.String()
+}
+
+var reversedNames = []string{
+	"import", "for", "if",
+}
+
+// suggestName
+func (t *GenType) suggestName(name string) string {
+	for _, n := range reversedNames {
+		if n == name {
+			return name + "x"
+		}
+	}
+	return name
 }
 
 // ModelListFromMethod

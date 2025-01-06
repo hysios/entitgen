@@ -22,7 +22,8 @@ type User struct {
 	Score       float64
 	Role        int32
 	IsActive    bool
-	ExpiresAt   sql.NullTime
+	Period      time.Duration
+	ExpiredAt   sql.NullTime
 	InScopes    datatypes.JSONSlice[string]
 	// Permissions map[string]*github.com/hysios/entitgen/example/gen/proto.User_PermissionList
 	CreatedAt time.Time

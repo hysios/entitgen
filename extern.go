@@ -112,6 +112,46 @@ var (
 				},
 			},
 		},
+		"google.golang.org/protobuf/types/known/durationpb.Duration": ExternalType{
+			Imports: []gen.Pkg{
+				gen.Pkg{
+					Fullname: "google.golang.org/protobuf/types/known/durationpb",
+				},
+			},
+			Type: gen.Var{
+				Name:    "t",
+				Type:    "Duration",
+				PkgName: "time",
+			},
+			Convert: &externConvert{
+				toProto: func(in string) string {
+					return in + ".AsDuration()"
+				},
+				fromProto: func(in string) string {
+					return "durationpb.New(" + in + ")"
+				},
+			},
+		},
+		"google.golang.org/protobuf/types/known/durationpb.Duration=>time.Duration": ExternalType{
+			Imports: []gen.Pkg{
+				gen.Pkg{
+					Fullname: "google.golang.org/protobuf/types/known/durationpb",
+				},
+			},
+			Type: gen.Var{
+				Name:    "t",
+				Type:    "Duration",
+				PkgName: "time",
+			},
+			Convert: &externConvert{
+				toProto: func(in string) string {
+					return in + ".AsDuration()"
+				},
+				fromProto: func(in string) string {
+					return "durationpb.New(" + in + ")"
+				},
+			},
+		},
 		"gorm.io/datatypes.JSONType[*]": ExternalType{
 			Imports: []gen.Pkg{
 				{

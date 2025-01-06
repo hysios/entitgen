@@ -21,6 +21,7 @@ var conventionTypes = map[string]string{
 	"*int64":   "sql.NullInt64",
 	"*float32": "sql.NullFloat64",
 	"*bool":    "sql.NullBool",
+	"float64":  "decimal.Decimal",
 }
 
 func conventionType(protoType, modelType *types.Var) (string, bool) {
@@ -69,21 +70,6 @@ func conventionType(protoType, modelType *types.Var) (string, bool) {
 			return modTyp, true
 		}
 		return typ, false
-		// case "bool":
-		// 	if kind(modTyp) != "bool" {
-		// 		return typ, false
-		// 	}
-		// 	return modTyp, true
-		// case "string":
-		// 	if kind(modTyp) != "string" {
-		// 		return typ, false
-		// 	}
-		// 	return modTyp, true
-		// case "byte":
-		// 	if kind(modTyp) != "byte" {
-		// 		return typ, false
-		// 	}
-		// 	return modTyp, true
 	}
 
 	return typ, false
