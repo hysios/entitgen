@@ -16,12 +16,10 @@ builds:
     goarch:
       - amd64
       - arm64
-    tool: go1.20.7
     main: .
     binary: entitgen
     ldflags:
       - -s -w -X main.version={{.Version}}
-    mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
   - format: tar.gz
