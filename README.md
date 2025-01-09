@@ -7,7 +7,15 @@
 ## 安装
 
 ```bash
-go get -u github.com/hysios/entitgen
+go install github.com/hysios/entitgen@latest
+```
+
+### 使用 Homebrew
+```bash
+# 安装
+brew install hysios/entitgen/entitgen
+#升级
+brew upgrade entitgen
 ```
 
 ## 命令参数

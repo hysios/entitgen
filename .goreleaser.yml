@@ -47,11 +47,11 @@ changelog:
       - "^ci:"
       - "^chore:"
 
-# Homebrew 配置（可选）
+# Homebrew 配置
 brews:
   - repository:
       owner: hysios
-      name: homebrew-tap
+      name: entitgen
     homepage: "https://github.com/hysios/entitgen"
     description: "Entity generator for Go"
     license: "MIT"
