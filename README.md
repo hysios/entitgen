@@ -6,15 +6,23 @@
 
 ## 安装
 
+### 使用 Go Install
+
 ```bash
 go install github.com/hysios/entitgen@latest
 ```
 
 ### 使用 Homebrew
+
 ```bash
-# 安装
+# 直接安装
 brew install hysios/entitgen/entitgen
-#升级
+
+# 或者分步安装
+brew tap hysios/entitgen https://github.com/hysios/entitgen
+brew install entitgen
+
+# 升级
 brew upgrade entitgen
 ```
 

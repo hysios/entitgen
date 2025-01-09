@@ -52,8 +52,11 @@ brews:
   - repository:
       owner: hysios
       name: entitgen
+      branch: main
+    install: |
+      bin.install "entitgen"
     homepage: "https://github.com/hysios/entitgen"
-    description: "Entity generator for Go"
+    description: "Entity generator for Go - protobuf Message and gorm Model converter"
     license: "MIT"
     test: |
       system "#{bin}/entitgen --version"
