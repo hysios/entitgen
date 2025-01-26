@@ -20,6 +20,7 @@ var conventionTypes = map[string]string{
 	"*int32":   "sql.NullInt32",
 	"*int64":   "sql.NullInt64",
 	"*float32": "sql.NullFloat64",
+	"*float64": "sql.NullFloat64",
 	"*bool":    "sql.NullBool",
 	"float64":  "decimal.Decimal",
 }
