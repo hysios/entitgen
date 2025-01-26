@@ -5,21 +5,21 @@
 class Entitgen < Formula
   desc "Entity generator for Go - protobuf Message and gorm Model converter"
   homepage "https://github.com/hysios/entitgen"
-  version "0.0.11"
+  version "0.0.12"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/hysios/entitgen/releases/download/v0.0.11/entitgen_Darwin_x86_64.tar.gz"
-      sha256 "38277b4d4f4d83ed3cbb6892a761a33dee0020681b90c2b1fdcc2d9f3838c62a"
+      url "https://github.com/hysios/entitgen/releases/download/v0.0.12/entitgen_Darwin_x86_64.tar.gz"
+      sha256 "a6dafccf897f88bce29fcf3380aae279b60a7ad13eec859fa7a49cd5b4004d03"
 
       def install
         bin.install "entitgen"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/hysios/entitgen/releases/download/v0.0.11/entitgen_Darwin_arm64.tar.gz"
-      sha256 "07d0bd7c495e140bbe66e469f9fcbf5977431131523aaa85cba1e9c80a425f05"
+      url "https://github.com/hysios/entitgen/releases/download/v0.0.12/entitgen_Darwin_arm64.tar.gz"
+      sha256 "4628d92351e7b59506438a6dbbc12dc3cb9aaeecb08cace18f8e8737eb62a88c"
 
       def install
         bin.install "entitgen"
@@ -30,8 +30,8 @@ class Entitgen < Formula
   on_linux do
     if Hardware::CPU.intel?
       if Hardware::CPU.is_64_bit?
-        url "https://github.com/hysios/entitgen/releases/download/v0.0.11/entitgen_Linux_x86_64.tar.gz"
-        sha256 "9024a392904729c169b9ccfb52b9fdfda4d7049ee959843a412ddfa0f04bc9d3"
+        url "https://github.com/hysios/entitgen/releases/download/v0.0.12/entitgen_Linux_x86_64.tar.gz"
+        sha256 "25e53d805b61e92dc84d0041c5aa90c0cd5105c11adc67533e5e45f6f3885b98"
 
         def install
           bin.install "entitgen"
@@ -40,8 +40,8 @@ class Entitgen < Formula
     end
     if Hardware::CPU.arm?
       if Hardware::CPU.is_64_bit?
-        url "https://github.com/hysios/entitgen/releases/download/v0.0.11/entitgen_Linux_arm64.tar.gz"
-        sha256 "1b2d73d89abf806e2a42203f8ce8735d7a4b54ad6c0f801fc026323567c55ea7"
+        url "https://github.com/hysios/entitgen/releases/download/v0.0.12/entitgen_Linux_arm64.tar.gz"
+        sha256 "288dcac40dcab14a986cecfaf452512057d0a2ff4052093b5230b98268c68c40"
 
         def install
           bin.install "entitgen"
